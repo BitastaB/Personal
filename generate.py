@@ -4,7 +4,7 @@ import os
 from mathutils import *   
 
 
-############To import other .py files####################################
+############ To import other .py files ####################################
 
 dir = os.path.dirname(bpy.data.filepath)
 if not dir in sys.path:
@@ -32,8 +32,9 @@ for obj in bpy.context.scene.objects:
      if obj.type == 'MESH':    
          bpy.data.objects.remove(obj, do_unlink=True)
          
-ladder = generate_ladder(-5, 0, 2)
+ladder = generate_ladder(-3, 0, 2)
 table = generate_table(1, 0, 2)
-laptop = generate_laptop(5,0,2)
-pinnochio = generate_pinnochio_male(-3, 0, 2)
+laptop = generate_laptop(6,0,2)
+pinnochio = generate_pinnochio_male(-1, 0, 2)
+pinnochio_female = generate_pinnochio_female(3, 0, 2)
 print("... Exiting generate.py ...")
