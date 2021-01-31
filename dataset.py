@@ -4,7 +4,7 @@ import numpy as np
 import sys
 import os
 
-############ To import other .py files ####################################
+############ To import other .py files ######################################################################
 
 dir = os.path.dirname(bpy.data.filepath)
 if not dir in sys.path:
@@ -18,7 +18,7 @@ import importlib
 importlib.reload(dataset_util)
 from dataset_util import *
 
-##########################################################################    
+###############################################################################################################    
 
 
 ###############################################################################################################
@@ -308,8 +308,8 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
 
     ##Body 
 
-    body_scale_x = 1.5
-    body_scale_y = 1.5
+    body_scale_x = 1.3
+    body_scale_y = 1.3
     body_scale_z = 2
     bpy.ops.mesh.primitive_cone_add(scale = (body_scale_x, body_scale_y, body_scale_z), location = (body_loc_x, body_loc_y, body_loc_z))
     bpy.context.active_object.name = 'pfemale_body'
@@ -423,7 +423,7 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     hand_scale_y=0.25
     hand_scale_z=0.25
 
-    hand1_loc_x = arm1_loc_x - body_scale_x/3.5
+    hand1_loc_x = arm1_loc_x - body_scale_x/3.1
     hand1_loc_y = arm1_loc_y  
     hand1_loc_z = arm1_loc_z - arm_scale_z/2.7
     bpy.ops.mesh.primitive_uv_sphere_add(scale = (hand_scale_x, hand_scale_y, hand_scale_z), location = (hand1_loc_x, hand1_loc_y, hand1_loc_z))
@@ -431,7 +431,7 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_hand1'])
     set_child_to_parent(bpy.data.objects['pfemale_hand1'], bpy.data.objects['pfemale_arm1'])
 
-    hand2_loc_x = arm2_loc_x + body_scale_x/3.5
+    hand2_loc_x = arm2_loc_x + body_scale_x/3.1
     hand2_loc_y = arm2_loc_y  
     hand2_loc_z = arm2_loc_z - arm_scale_z/2.7
     bpy.ops.mesh.primitive_uv_sphere_add(scale = (hand_scale_x, hand_scale_y, hand_scale_z), location = (hand2_loc_x, hand2_loc_y, hand2_loc_z))
@@ -465,4 +465,146 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
 ################################################################################################################
 
 
+
+################################################################################################################
+#                     Generate scanning machine                                                                #
+################################################################################################################
+
+
+#input Loc_base_z is where the bottom of the entire machine is supposed to bes       
+def generate_scanner(loc_x, loc_y, loc_z):
     
+    print("... Generating scanner machine ...")
+    collection = bpy.data.collections.new("Scanner")
+    
+    #Base machine
+    base_scale_x = 1.6
+    base_scale_y = 1.1
+    base_scale_z = 1.6
+    
+    base_loc_x = loc_x
+    base_loc_y = loc_y
+    base_loc_z = loc_z + (base_scale_z/2)
+    
+    bpy.ops.mesh.primitive_cube_add(scale = (base_scale_x, base_scale_y, base_scale_z), location = (base_loc_x, base_loc_y, base_loc_z))
+    bpy.context.active_object.name = 'scanner_base'
+    bpy.data.collections['Scanner'].objects.link(bpy.data.objects['scanner_base'])
+       
+    
+    #Scanner-keypad
+    keypad_scale_x = base_scale_x*0.4
+    keypad_scale_y = base_scale_y
+    keypad_scale_z = base_scale_z*0.06
+    
+    keypad_loc_x = base_loc_x - base_scale_x/3.3
+    keypad_loc_y = base_loc_y
+    keypad_loc_z = base_loc_z + base_scale_z/2 + keypad_scale_z/2
+ 
+    bpy.ops.mesh.primitive_cube_add(scale = (keypad_scale_x, keypad_scale_y, keypad_scale_z), location = (keypad_loc_x, keypad_loc_y, keypad_loc_z))
+    bpy.context.active_object.name = 'scanner_keypad'
+    bpy.data.collections['Scanner'].objects.link(bpy.data.objects['scanner_keypad'])
+    set_child_to_parent(bpy.data.objects['scanner_keypad'], bpy.data.objects['scanner_base'])
+    
+    
+    
+    #Scanning part borders 1-left 2-right 3-bottom 4-top
+    border_vertical_scale_x = keypad_scale_z 
+    border_vertical_scale_y = keypad_scale_y
+    border_vertical_scale_z = keypad_scale_z
+    
+    #Left
+    border1_loc_x = keypad_loc_x + keypad_scale_x/2 + border_vertical_scale_x/2
+    border1_loc_y = keypad_loc_y
+    border1_loc_z = keypad_loc_z
+    
+    bpy.ops.mesh.primitive_cube_add(scale = (border_vertical_scale_x, border_vertical_scale_y, border_vertical_scale_z), location = (border1_loc_x, border1_loc_y, border1_loc_z))
+    bpy.context.active_object.name = 'scanner_border1'
+    bpy.data.collections['Scanner'].objects.link(bpy.data.objects['scanner_border1'])
+    set_child_to_parent(bpy.data.objects['scanner_border1'], bpy.data.objects['scanner_base'])
+    
+    #Right
+    border2_loc_x = border1_loc_x + (base_scale_x - border_vertical_scale_x - keypad_scale_x)
+    border2_loc_y = keypad_loc_y
+    border2_loc_z = keypad_loc_z
+    
+    bpy.ops.mesh.primitive_cube_add(scale = (border_vertical_scale_x, border_vertical_scale_y, border_vertical_scale_z), location = (border2_loc_x, border2_loc_y, border2_loc_z))
+    bpy.context.active_object.name = 'scanner_border2'
+    bpy.data.collections['Scanner'].objects.link(bpy.data.objects['scanner_border2'])
+    set_child_to_parent(bpy.data.objects['scanner_border2'], bpy.data.objects['scanner_base'])
+
+    border_horizontal_scale_x = base_scale_x - 2*border_vertical_scale_x - keypad_scale_x
+    border_horizontal_scale_y = border_vertical_scale_x
+    border_horizontal_scale_z = border_vertical_scale_z
+    
+    #Bottom
+    border3_loc_x = border1_loc_x + border_vertical_scale_x/2 + border_horizontal_scale_x/2
+    border3_loc_y = base_loc_y - base_scale_y/2 + border_horizontal_scale_y/2
+    border3_loc_z = keypad_loc_z
+
+    bpy.ops.mesh.primitive_cube_add(scale = (border_horizontal_scale_x, border_horizontal_scale_y, border_horizontal_scale_z), location = (border3_loc_x, border3_loc_y, border3_loc_z))
+    bpy.context.active_object.name = 'scanner_border3'
+    bpy.data.collections['Scanner'].objects.link(bpy.data.objects['scanner_border3'])
+    set_child_to_parent(bpy.data.objects['scanner_border3'], bpy.data.objects['scanner_base'])
+    
+     #Top
+    border4_loc_x = border1_loc_x + border_vertical_scale_x/2 + border_horizontal_scale_x/2
+    border4_loc_y = base_loc_y + base_scale_y/2 - border_horizontal_scale_y/2
+    border4_loc_z = keypad_loc_z
+
+    bpy.ops.mesh.primitive_cube_add(scale = (border_horizontal_scale_x, border_horizontal_scale_y, border_horizontal_scale_z), location = (border4_loc_x, border4_loc_y, border4_loc_z))
+    bpy.context.active_object.name = 'scanner_border4'
+    bpy.data.collections['Scanner'].objects.link(bpy.data.objects['scanner_border4'])
+    set_child_to_parent(bpy.data.objects['scanner_border4'], bpy.data.objects['scanner_base'])
+    
+    
+    #Input screen
+    inputscreen_scale_x = keypad_scale_x
+    inputscreen_scale_y = keypad_scale_y/3
+    inputscreen_scale_z = 0.009
+    
+    inputscreen_loc_x = keypad_loc_x
+    inputscreen_loc_y = keypad_loc_y
+    inputscreen_loc_z = keypad_loc_z + keypad_scale_z/2
+  
+  
+    bpy.ops.mesh.primitive_cube_add(scale = (inputscreen_scale_x, inputscreen_scale_y, inputscreen_scale_z), location = (inputscreen_loc_x, inputscreen_loc_y, inputscreen_loc_z))
+    bpy.context.active_object.name = 'inputscreen'
+    bpy.data.collections['Scanner'].objects.link(bpy.data.objects['inputscreen'])
+    inputscreen = bpy.data.objects['inputscreen']
+    # create material
+    mat = bpy.data.materials.new(name="Material")
+    # Assign it to object
+    if inputscreen.data.materials:
+    # assign to 1st material slot
+        inputscreen.data.materials[0] = mat
+    else:
+    # no slots
+        inputscreen.data.materials.append(mat)
+    inputscreen.active_material.diffuse_color = (0, 0, 0, 1)
+    set_child_to_parent(bpy.data.objects['inputscreen'], bpy.data.objects['scanner_keypad'])
+    
+    
+    
+     #Scanner lid
+    lid_scale_x = base_scale_x
+    lid_scale_y = base_scale_y
+    lid_scale_z = 0.065
+    
+    lid_loc_x = base_loc_x
+    lid_loc_y = base_loc_y + base_scale_y/4
+    lid_loc_z = keypad_loc_z + keypad_scale_z*5
+        
+    bpy.ops.mesh.primitive_cube_add(scale = (lid_scale_x, lid_scale_y, lid_scale_z), location = (lid_loc_x, lid_loc_y, lid_loc_z), rotation = (-60*np.pi /180, 0, 0))
+    bpy.context.active_object.name = 'scanner_lid'
+    bpy.data.collections['Scanner'].objects.link(bpy.data.objects['scanner_lid'])
+    set_child_to_parent(bpy.data.objects['scanner_lid'], bpy.data.objects['scanner_base'])
+ 
+    
+    print("... Generating scanner machine complete ...")
+    return bpy.data.collections['Scanner']
+ 
+ 
+################################################################################################################
+#                     End of generate scanning machine                                                         #
+################################################################################################################
+   
