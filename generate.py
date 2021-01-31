@@ -34,7 +34,7 @@ for obj in bpy.context.scene.objects:
          
 ladder = generate_ladder(-3, 0, 2)
 table = generate_table(1, 0, 2)
-laptop = generate_laptop(6,0,2)
+laptop = generate_laptop(1,0,2.2)
 pinnochio = generate_pinnochio_male(-1, 0, 2)
 pinnochio_female = generate_pinnochio_female(3, 0, 2)
 print("... Exiting generate.py ...")

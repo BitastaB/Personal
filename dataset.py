@@ -1,6 +1,26 @@
 import bpy
 from mathutils import *
 import numpy as np  
+import sys
+import os
+
+############ To import other .py files ####################################
+
+dir = os.path.dirname(bpy.data.filepath)
+if not dir in sys.path:
+    sys.path.append(dir )
+import dataset_util
+#import table
+
+# this next part forces a reload in case you edit the source after you first start the blender session
+import importlib
+
+importlib.reload(dataset_util)
+from dataset_util import *
+
+##########################################################################    
+
+
 ###############################################################################################################
 #                               Generate a simple ladder                                                      #
 ###############################################################################################################
@@ -18,22 +38,23 @@ def generate_ladder(loc_x, loc_y, loc_z):
     bpy.ops.mesh.primitive_cylinder_add(scale = (0.072, 0.072, 4.606),location = right_ladderlocation)
     bpy.context.active_object.name = 'ladder_right'
     bpy.data.collections['Ladder'].objects.link(bpy.data.objects['ladder_right'])
+    
+    #setting ladder_right as a child of ladder_left for easy transform
+    set_child_to_parent(bpy.data.objects['ladder_right'], bpy.data.objects['ladder_left'])
 
     ## generating the steps of the ladder
+    #All steps of the ladder are individual children of ladder_left for easy transform
     ladder_step_loc_x = ((right_ladderlocation[0] - left_ladder_location[0])/2) + left_ladder_location[0]
-    print("THE LOC IS : ",ladder_step_loc_x)
     middle_paddle_location = Vector((ladder_step_loc_x, 0, 0))
     i = 0.0
     for x in range(11):
         bpy.ops.mesh.primitive_cylinder_add(location = middle_paddle_location + Vector((0.0, 0.0, i)), rotation = (0, 90*np.pi/180, 0), scale = (0.072, 0.072, 0.829))
         i = i+0.4
         bpy.data.collections['Ladder'].objects.link(bpy.context.active_object)
+        set_child_to_parent(bpy.context.active_object, bpy.data.objects['ladder_left'])
 
     print("... Ladder generation complete ...")
     return bpy.data.collections['Ladder']
-    #for obj in bpy.data.collections['Ladder'].all_objects:
-    #   obj.select_set(True)
-    
     
     
     
@@ -52,15 +73,19 @@ def generate_table(loc_x, loc_y, loc_z):
     
     bpy.ops.mesh.primitive_cylinder_add(scale = (0.15, 0.15, 2), location = (table_top_loc_x + 0.5, table_top_loc_y + 0.5, 1))
     bpy.data.collections['Table'].objects.link(bpy.context.active_object)
+    set_child_to_parent(bpy.context.active_object, bpy.data.objects['table_top'])
     
     bpy.ops.mesh.primitive_cylinder_add(scale = (0.15, 0.15, 2), location = (table_top_loc_x - 0.5, table_top_loc_y + 0.5, 1))
     bpy.data.collections['Table'].objects.link(bpy.context.active_object)
+    set_child_to_parent(bpy.context.active_object, bpy.data.objects['table_top'])
     
     bpy.ops.mesh.primitive_cylinder_add(scale = (0.15, 0.15, 2), location = (table_top_loc_x - 0.5, table_top_loc_y - 0.5, 1))
     bpy.data.collections['Table'].objects.link(bpy.context.active_object)
+    set_child_to_parent(bpy.context.active_object, bpy.data.objects['table_top'])
     
     bpy.ops.mesh.primitive_cylinder_add(scale = (0.15, 0.15, 2), location = (table_top_loc_x + 0.5, table_top_loc_y - 0.5, 1))
     bpy.data.collections['Table'].objects.link(bpy.context.active_object)
+    set_child_to_parent(bpy.context.active_object, bpy.data.objects['table_top'])
     
     print("... Table generation complete ...")
     return bpy.data.collections['Table']
@@ -93,14 +118,15 @@ def generate_laptop(loc_base_x, loc_base_y, loc_base_z):
     bpy.context.active_object.name = 'screen'
     bpy.data.collections['Laptop'].objects.link(bpy.data.objects['screen'])
     
-    #bpy.data.objects['screen'].parent = bpy.data.objects['keyboard']
+    #setting screen as parent keyboard as child for easy transform
+    set_child_to_parent(bpy.data.objects['keyboard'], bpy.data.objects['screen'])
 
     print("... Laptop generation completed ...")
     return bpy.data.collections['Laptop']
 
 
 ################################################################################################################
-#                     Generate a simple Pinnochio male                                                                #
+#                     Generate a simple Pinnochio male                                                         #
 ################################################################################################################
 
 def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):         
@@ -115,8 +141,8 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
     body_scale_y = 0.65
     body_scale_z = 1.5
     bpy.ops.mesh.primitive_cylinder_add(scale = (body_scale_x, body_scale_y, body_scale_z), location = (body_loc_x, body_loc_y, body_loc_z))
-    bpy.context.active_object.name = 'body'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['body'])
+    bpy.context.active_object.name = 'pmale_body'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_body'])
 
 
     ##Legs
@@ -128,16 +154,18 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
     leg1_loc_y = body_loc_y
     leg1_loc_z = body_loc_z - (body_scale_z/2) - (leg_scale_z/2)
     bpy.ops.mesh.primitive_cylinder_add(scale = (leg_scale_x, leg_scale_y, leg_scale_z), location = (leg1_loc_x, leg1_loc_y, leg1_loc_z))
-    bpy.context.active_object.name = 'leg1'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['leg1'])
+    bpy.context.active_object.name = 'pmale_leg1'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_leg1'])
+    set_child_to_parent(bpy.data.objects['pmale_leg1'], bpy.data.objects['pmale_body'])
 
 
     leg2_loc_x = body_loc_x + body_scale_x/3
     leg2_loc_y = body_loc_y
     leg2_loc_z = body_loc_z - (body_scale_z/2) - (leg_scale_z/2)
     bpy.ops.mesh.primitive_cylinder_add(scale = (leg_scale_x, leg_scale_y, leg_scale_z), location = (leg2_loc_x, leg2_loc_y, leg2_loc_z))
-    bpy.context.active_object.name = 'leg2'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['leg2'])
+    bpy.context.active_object.name = 'pmale_leg2'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_leg2'])
+    set_child_to_parent(bpy.data.objects['pmale_leg2'], bpy.data.objects['pmale_body'])
 
 
 
@@ -150,16 +178,17 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
     feet1_loc_y = leg1_loc_y
     feet1_loc_z = leg1_loc_z - (leg_scale_z/2) - (foot_scale_z/2)
     bpy.ops.mesh.primitive_cube_add(scale = (foot_scale_x, foot_scale_y, foot_scale_z), location = (feet1_loc_x, feet1_loc_y, feet1_loc_z))
-    bpy.context.active_object.name = 'feet1'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['feet1'])
+    bpy.context.active_object.name = 'pmale_feet1'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_feet1'])
+    set_child_to_parent(bpy.data.objects['pmale_feet1'], bpy.data.objects['pmale_leg1'])
 
     feet2_loc_x = leg2_loc_x
     feet2_loc_y = leg2_loc_y
     feet2_loc_z = leg2_loc_z - (leg_scale_z/2) - (foot_scale_z/2)
     bpy.ops.mesh.primitive_cube_add(scale = (foot_scale_x, foot_scale_y, foot_scale_z), location = (feet2_loc_x, feet2_loc_y, feet2_loc_z))
-    bpy.context.active_object.name = 'feet2'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['feet2'])
-
+    bpy.context.active_object.name = 'pmale_feet2'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_feet2'])
+    set_child_to_parent(bpy.data.objects['pmale_feet2'], bpy.data.objects['pmale_leg2'])
 
 
 
@@ -172,8 +201,9 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
     neck_loc_z = body_loc_z + (body_scale_z/2) + (neck_scale_z/2)
 
     bpy.ops.mesh.primitive_cylinder_add(scale = (neck_scale_x, neck_scale_y, neck_scale_z), location = (neck_loc_x, neck_loc_y, neck_loc_z))
-    bpy.context.active_object.name = 'neck'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['neck'])
+    bpy.context.active_object.name = 'pmale_neck'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_neck'])
+    set_child_to_parent(bpy.data.objects['pmale_neck'], bpy.data.objects['pmale_body'])
 
 
     #Head
@@ -186,8 +216,9 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
     head_loc_z = neck_loc_z + (neck_scale_z/2) + (head_scale_z/2)
 
     bpy.ops.mesh.primitive_uv_sphere_add(scale = (head_scale_x, head_scale_y, head_scale_z), location = (head_loc_x, head_loc_y, head_loc_z))
-    bpy.context.active_object.name = 'head'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['head'])
+    bpy.context.active_object.name = 'pmale_head'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_head'])
+    set_child_to_parent(bpy.data.objects['pmale_head'], bpy.data.objects['pmale_neck'])
 
 
     #Arms
@@ -200,8 +231,9 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
     arm1_loc_z = body_loc_z + ((body_scale_z - arm_scale_z)/2)
 
     bpy.ops.mesh.primitive_cylinder_add(scale = (arm_scale_x, arm_scale_y, arm_scale_z), location = (arm1_loc_x, arm1_loc_y, arm1_loc_z), rotation = (0, 30*np.pi /180, 0))
-    bpy.context.active_object.name = 'arm1'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['arm1'])
+    bpy.context.active_object.name = 'pmale_arm1'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_arm1'])
+    set_child_to_parent(bpy.data.objects['pmale_arm1'], bpy.data.objects['pmale_body'])
 
 
     arm2_loc_x = body_loc_x + (body_scale_x/1.3)
@@ -209,8 +241,9 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
     arm2_loc_z = body_loc_z + ((body_scale_z - arm_scale_z)/2)
 
     bpy.ops.mesh.primitive_cylinder_add(scale = (arm_scale_x, arm_scale_y, arm_scale_z), location = (arm2_loc_x, arm2_loc_y, arm2_loc_z), rotation = (0, -30*np.pi /180, 0))
-    bpy.context.active_object.name = 'arm2'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['arm2'])
+    bpy.context.active_object.name = 'pmale_arm2'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_arm2'])
+    set_child_to_parent(bpy.data.objects['pmale_arm2'], bpy.data.objects['pmale_body'])
 
 
     #Hands
@@ -222,15 +255,18 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
     hand1_loc_y = arm1_loc_y  
     hand1_loc_z = arm1_loc_z - arm_scale_z/2.7
     bpy.ops.mesh.primitive_uv_sphere_add(scale = (hand_scale_x, hand_scale_y, hand_scale_z), location = (hand1_loc_x, hand1_loc_y, hand1_loc_z))
-    bpy.context.active_object.name = 'hand1'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['hand1'])
+    bpy.context.active_object.name = 'pmale_hand1'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_hand1'])
+    set_child_to_parent(bpy.data.objects['pmale_hand1'], bpy.data.objects['pmale_arm1'])
+    
 
     hand2_loc_x = arm2_loc_x + arm_scale_x/0.8
     hand2_loc_y = arm2_loc_y  
     hand2_loc_z = arm2_loc_z - arm_scale_z/2.7
     bpy.ops.mesh.primitive_uv_sphere_add(scale = (hand_scale_x, hand_scale_y, hand_scale_z), location = (hand2_loc_x, hand2_loc_y, hand2_loc_z))
-    bpy.context.active_object.name = 'hand2'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['hand2'])
+    bpy.context.active_object.name = 'pmale_hand2'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_hand2'])
+    set_child_to_parent(bpy.data.objects['pmale_hand2'], bpy.data.objects['pmale_arm2'])
 
 
 
@@ -245,8 +281,9 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
     nose_loc_z = head_loc_z
 
     bpy.ops.mesh.primitive_cylinder_add(scale = (nose_scale_x, nose_scale_y, nose_scale_z), location = (nose_loc_x, nose_loc_y, nose_loc_z), rotation = (90*np.pi /180, 0, 0))
-    bpy.context.active_object.name = 'nose'
-    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['nose'])
+    bpy.context.active_object.name = 'pmale_nose'
+    bpy.data.collections['Pinnochio'].objects.link(bpy.data.objects['pmale_nose'])
+    set_child_to_parent(bpy.data.objects['pmale_nose'], bpy.data.objects['pmale_head'])
     
     
     print("... Male pinnochio generation completed ...")
@@ -255,13 +292,13 @@ def generate_pinnochio_male(body_loc_x, body_loc_y, body_loc_z):
 
 
 ################################################################################################################
-#                     End of simple Pinnochio male                                                                #
+#                     End of simple Pinnochio male                                                             #
 ################################################################################################################
 
 
 
 ################################################################################################################
-#                     Generate a simple Pinnochio Female                                                                #
+#                     Generate a simple Pinnochio Female                                                       #
 ################################################################################################################
 
 def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):         
@@ -270,35 +307,36 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     collection = bpy.data.collections.new("PinnochioFemale")
 
     ##Body 
-    #Body loc z recommended to be 1.5
 
     body_scale_x = 1.5
     body_scale_y = 1.5
     body_scale_z = 2
     bpy.ops.mesh.primitive_cone_add(scale = (body_scale_x, body_scale_y, body_scale_z), location = (body_loc_x, body_loc_y, body_loc_z))
-    bpy.context.active_object.name = 'body'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['body'])
+    bpy.context.active_object.name = 'pfemale_body'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_body'])
 
 
     ##Legs
-    leg_scale_x = 0.17
-    leg_scale_y = 0.17
-    leg_scale_z = 1.2
+    leg_scale_x = 0.15
+    leg_scale_y = 0.15
+    leg_scale_z = 1.1
 
     leg1_loc_x = body_loc_x - body_scale_x/5
     leg1_loc_y = body_loc_y
     leg1_loc_z = body_loc_z - (body_scale_z/2) - (leg_scale_z/2)
     bpy.ops.mesh.primitive_cylinder_add(scale = (leg_scale_x, leg_scale_y, leg_scale_z), location = (leg1_loc_x, leg1_loc_y, leg1_loc_z))
-    bpy.context.active_object.name = 'leg1'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['leg1'])
+    bpy.context.active_object.name = 'pfemale_leg1'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_leg1'])
+    set_child_to_parent(bpy.data.objects['pfemale_leg1'], bpy.data.objects['pfemale_body'])
 
 
     leg2_loc_x = body_loc_x + body_scale_x/5
     leg2_loc_y = body_loc_y
     leg2_loc_z = body_loc_z - (body_scale_z/2) - (leg_scale_z/2)
     bpy.ops.mesh.primitive_cylinder_add(scale = (leg_scale_x, leg_scale_y, leg_scale_z), location = (leg2_loc_x, leg2_loc_y, leg2_loc_z))
-    bpy.context.active_object.name = 'leg2'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['leg2'])
+    bpy.context.active_object.name = 'pfemale_leg2'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_leg2'])
+    set_child_to_parent(bpy.data.objects['pfemale_leg2'], bpy.data.objects['pfemale_body'])
 
 
 
@@ -311,15 +349,17 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     feet1_loc_y = leg1_loc_y
     feet1_loc_z = leg1_loc_z - (leg_scale_z/2) - (foot_scale_z/2)
     bpy.ops.mesh.primitive_cube_add(scale = (foot_scale_x, foot_scale_y, foot_scale_z), location = (feet1_loc_x, feet1_loc_y, feet1_loc_z))
-    bpy.context.active_object.name = 'feet1'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['feet1'])
+    bpy.context.active_object.name = 'pfemale_feet1'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_feet1'])
+    set_child_to_parent(bpy.data.objects['pfemale_feet1'], bpy.data.objects['pfemale_leg1'])
 
     feet2_loc_x = leg2_loc_x
     feet2_loc_y = leg2_loc_y
     feet2_loc_z = leg2_loc_z - (leg_scale_z/2) - (foot_scale_z/2)
     bpy.ops.mesh.primitive_cube_add(scale = (foot_scale_x, foot_scale_y, foot_scale_z), location = (feet2_loc_x, feet2_loc_y, feet2_loc_z))
-    bpy.context.active_object.name = 'feet2'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['feet2'])
+    bpy.context.active_object.name = 'pfemale_feet2'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_feet2'])
+    set_child_to_parent(bpy.data.objects['pfemale_feet2'], bpy.data.objects['pfemale_leg2'])
 
 
 
@@ -333,8 +373,9 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     neck_loc_z = body_loc_z + (body_scale_z/3) + (neck_scale_z/2)
 
     bpy.ops.mesh.primitive_cylinder_add(scale = (neck_scale_x, neck_scale_y, neck_scale_z), location = (neck_loc_x, neck_loc_y, neck_loc_z))
-    bpy.context.active_object.name = 'neck'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['neck'])
+    bpy.context.active_object.name = 'pfemale_neck'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_neck'])
+    set_child_to_parent(bpy.data.objects['pfemale_neck'], bpy.data.objects['pfemale_body'])
 
 
     #Heads
@@ -347,8 +388,9 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     head_loc_z = neck_loc_z + (neck_scale_z/2) + (head_scale_z/2)
 
     bpy.ops.mesh.primitive_uv_sphere_add(scale = (head_scale_x, head_scale_y, head_scale_z), location = (head_loc_x, head_loc_y, head_loc_z))
-    bpy.context.active_object.name = 'head'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['head'])
+    bpy.context.active_object.name = 'pfemale_head'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_head'])
+    set_child_to_parent(bpy.data.objects['pfemale_head'], bpy.data.objects['pfemale_neck'])
 
 
     #Arms
@@ -361,8 +403,9 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     arm1_loc_z = body_loc_z +  body_scale_z/8
 
     bpy.ops.mesh.primitive_cylinder_add(scale = (arm_scale_x, arm_scale_y, arm_scale_z), location = (arm1_loc_x, arm1_loc_y, arm1_loc_z), rotation = (0, 50*np.pi /180, 0))
-    bpy.context.active_object.name = 'arm1'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['arm1'])
+    bpy.context.active_object.name = 'pfemale_arm1'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_arm1'])
+    set_child_to_parent(bpy.data.objects['pfemale_arm1'], bpy.data.objects['pfemale_body'])
 
 
     arm2_loc_x = body_loc_x + body_scale_x/3.5
@@ -370,8 +413,9 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     arm2_loc_z = body_loc_z +  body_scale_z/8
 
     bpy.ops.mesh.primitive_cylinder_add(scale = (arm_scale_x, arm_scale_y, arm_scale_z), location = (arm2_loc_x, arm2_loc_y, arm2_loc_z), rotation = (0, -50*np.pi /180, 0))
-    bpy.context.active_object.name = 'arm2'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['arm2'])
+    bpy.context.active_object.name = 'pfemale_arm2'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_arm2'])
+    set_child_to_parent(bpy.data.objects['pfemale_arm2'], bpy.data.objects['pfemale_body'])
 
 
     #Hands
@@ -383,15 +427,17 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     hand1_loc_y = arm1_loc_y  
     hand1_loc_z = arm1_loc_z - arm_scale_z/2.7
     bpy.ops.mesh.primitive_uv_sphere_add(scale = (hand_scale_x, hand_scale_y, hand_scale_z), location = (hand1_loc_x, hand1_loc_y, hand1_loc_z))
-    bpy.context.active_object.name = 'hand1'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['hand1'])
+    bpy.context.active_object.name = 'pfemale_hand1'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_hand1'])
+    set_child_to_parent(bpy.data.objects['pfemale_hand1'], bpy.data.objects['pfemale_arm1'])
 
     hand2_loc_x = arm2_loc_x + body_scale_x/3.5
     hand2_loc_y = arm2_loc_y  
     hand2_loc_z = arm2_loc_z - arm_scale_z/2.7
     bpy.ops.mesh.primitive_uv_sphere_add(scale = (hand_scale_x, hand_scale_y, hand_scale_z), location = (hand2_loc_x, hand2_loc_y, hand2_loc_z))
-    bpy.context.active_object.name = 'hand2'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['hand2'])
+    bpy.context.active_object.name = 'pfemale_hand2'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_hand2'])
+    set_child_to_parent(bpy.data.objects['pfemale_hand2'], bpy.data.objects['pfemale_arm2'])
 
 
 
@@ -406,13 +452,17 @@ def generate_pinnochio_female(body_loc_x, body_loc_y, body_loc_z):
     nose_loc_z = head_loc_z
 
     bpy.ops.mesh.primitive_cylinder_add(scale = (nose_scale_x, nose_scale_y, nose_scale_z), location = (nose_loc_x, nose_loc_y, nose_loc_z), rotation = (90*np.pi /180, 0, 0))
-    bpy.context.active_object.name = 'nose'
-    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['nose'])
+    bpy.context.active_object.name = 'pfemale_nose'
+    bpy.data.collections['PinnochioFemale'].objects.link(bpy.data.objects['pfemale_nose'])
+    set_child_to_parent(bpy.data.objects['pfemale_nose'], bpy.data.objects['pfemale_head'])
     
     print("... Female pinnochio generation complete ...")
     return bpy.data.collections['PinnochioFemale']
 
 
 ################################################################################################################
-#                     End of simple Pinnochio female                                                                #
+#                     End of simple Pinnochio female                                                           #
 ################################################################################################################
+
+
+    
