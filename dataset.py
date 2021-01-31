@@ -598,6 +598,34 @@ def generate_scanner(loc_x, loc_y, loc_z):
     bpy.context.active_object.name = 'scanner_lid'
     bpy.data.collections['Scanner'].objects.link(bpy.data.objects['scanner_lid'])
     set_child_to_parent(bpy.data.objects['scanner_lid'], bpy.data.objects['scanner_base'])
+    
+    
+    
+    # Input button
+    button_scale_x = 0.15
+    button_scale_y = 0.08
+    button_scale_z = 0.02
+    
+    button_loc_x = inputscreen_loc_x + 0.3*inputscreen_scale_x
+    button_loc_y = inputscreen_loc_y - 0.8*inputscreen_scale_y
+    button_loc_z = inputscreen_loc_z
+    
+    bpy.ops.mesh.primitive_cylinder_add(scale = (button_scale_x, button_scale_y, button_scale_z), location = (button_loc_x, button_loc_y, button_loc_z))
+    bpy.context.active_object.name = 'button'
+    button = bpy.data.objects['button']
+    # create material
+    mat = bpy.data.materials.new(name="Material")
+    # Assign it to object
+    if button.data.materials:
+    # assign to 1st material slot
+        button.data.materials[0] = mat
+    else:
+    # no slots
+        button.data.materials.append(mat)
+    button.active_material.diffuse_color = (255, 140, 0, 1)
+    bpy.data.collections['Scanner'].objects.link(button)
+    set_child_to_parent(button, bpy.data.objects['scanner_keypad'])
+
  
     
     print("... Generating scanner machine complete ...")
