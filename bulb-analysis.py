@@ -2,7 +2,8 @@ import bpy
 
 print("Starting...")
 
-SceneObjects = []
+scene_objects_list = []
+frame_read_counter = []
 
 class SceneObject:
   
@@ -34,7 +35,7 @@ class SceneObject:
     
 
 
-############################################ Set global scene properties ##################################
+############ Set global scene properties 
 def set_scene_properties():
     
     i=100
@@ -46,33 +47,25 @@ def set_scene_properties():
         so.set_location(i)
         so.set_location(i*5)
         i+=1
-        SceneObjects.append(so)         
+        scene_objects_list.append(so)         
         print("added loc :"+ str((so.location)[1]))
       #  print("test get by name : "+ str(so.getByName(obj.name).loc[0]))
         print(f"Setting params completed for {obj.name}\n")
         
-    for object in SceneObjects:
+    for object in scene_objects_list:
         if(object.name == 'Ladder'):
             print("Testing accessing object locations"+ str(object.location[0]))     
         
-    print("Total objects in current scene : " + str(len(SceneObjects)))
-    
-    
-    
-def analyse_scene1():
-    objectCount = 0 
-    print("Objects in the scene are :")
-    for obj in bpy.context.scene.objects:
-      if obj.type == 'MESH':          
-          objectCount+=1
-          print(obj.name)
-          anim = obj.animation_data
-          if anim is not None and anim.action is not None:
-              for fcu in anim.action.fcurves:
-                  print("keyframe length thingy: "+str(len(fcu.keyframe_points)))
+    print("Total objects in current scene : " + str(len(scene_objects_list)))
                   
-def process_obj_location():
-    print(" Processing object location")
+                
+def process_obj_location(self):
+    current_frame = bpy.data.scenes["Scene"].frame_current
+    print(f"Processing object location for frame {current_frame}")    
+    if (current_frame in frame_read_counter):
+        return
+    frame_read_counter.append(bpy.data.scenes["Scene"].frame_current)
+    print(f"Finished processing locations for frame : {current_frame}")
     
     
 #################### code to play animation #######################################################################
@@ -85,8 +78,7 @@ class ModalTimerOperator(bpy.types.Operator):
     count = 0
     
     def modal(self, context, event):
-        #print("in modal: stopAnimation "+str(stopAnimation))
-     #   evaluateScene()
+        process_obj_location(self)
         if event.type in {'ESC'} or (bpy.data.scenes["Scene"].frame_current == bpy.data.scenes["Scene"].frame_end):
             self.cancel(context)
             return {'CANCELLED'}
@@ -99,6 +91,7 @@ class ModalTimerOperator(bpy.types.Operator):
 
     def execute(self, context):
         wm = context.window_manager
+        bpy.data.scenes["Scene"].frame_current = bpy.data.scenes["Scene"].frame_start
         # start animating
         bpy.ops.screen.animation_play()
         self._timer = wm.event_timer_add(1, window=context.window)
