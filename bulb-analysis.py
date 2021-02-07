@@ -2,22 +2,62 @@ import bpy
 
 print("Starting...")
 
-sceneObjects = []
-frameEnd = 0
+SceneObjects = []
 
-### set global scene properties
-def setSceneProperties():
+class SceneObject:
+  
+  def __init__(self, name):
+      print(f"Initialising {name}")
+      self.name = name 
+      self._location = []
+      print("initalisation complete")
     
-    print("Retrieving scene properties")
+  @property
+  def location(self):
+      """I'm the location of the scene object."""
+      print(f"getter of location called for {self.name}")
+      return self._location
+
+ # @loc.setter
+  def set_location(self, loc):
+      print(f"setter of location called for {self.name}")
+   #   print("Length of frame_and_loc: "+ str(len(frame_and_loc)))
+    #  print("frame no.: "+ str(frame_and_loc[0]))
+    #  print("location of object : "+ str(frame_and_loc[1]))
+    #  self._loc.insert(frame_and_loc[0], frame_and_loc[1])
+      self._location.append(loc) 
+      
+      
+  def get_by_name(self, name):
+      if(self.name == name):
+          return self     
+    
+
+
+############################################ Set global scene properties ##################################
+def set_scene_properties():
+    
+    i=100
+    print("Setting scene properties")
     for obj in bpy.context.scene.objects:
-      if obj.type == 'MESH':          
-          sceneObjects.append(obj.name)
-    if 'Room' in sceneObjects:
-        sceneObjects.remove('Room')
-    print("Total objects in current scene : " + str(len(sceneObjects)))
-    print(f'Objects in scene are {sceneObjects}')
+      if obj.type == 'MESH': 
+        so = SceneObject(obj.name)
+        print("added object : "+so.name)
+        so.set_location(i)
+        so.set_location(i*5)
+        i+=1
+        SceneObjects.append(so)         
+        print("added loc :"+ str((so.location)[1]))
+      #  print("test get by name : "+ str(so.getByName(obj.name).loc[0]))
+        print(f"Setting params completed for {obj.name}\n")
+        
+    for object in SceneObjects:
+        if(object.name == 'Ladder'):
+            print("Testing accessing object locations"+ str(object.location[0]))     
+        
+    print("Total objects in current scene : " + str(len(SceneObjects)))
     
-    frameEnd = bpy.data.scenes["Scene"].frame_end
+    
     
 def analyse_scene1():
     objectCount = 0 
@@ -31,7 +71,10 @@ def analyse_scene1():
               for fcu in anim.action.fcurves:
                   print("keyframe length thingy: "+str(len(fcu.keyframe_points)))
                   
-
+def process_obj_location():
+    print(" Processing object location")
+    
+    
 #################### code to play animation #######################################################################
 class ModalTimerOperator(bpy.types.Operator):
     """Operator which runs its self from a timer"""
@@ -43,7 +86,7 @@ class ModalTimerOperator(bpy.types.Operator):
     
     def modal(self, context, event):
         #print("in modal: stopAnimation "+str(stopAnimation))
-        #evaluateScene()
+     #   evaluateScene()
         if event.type in {'ESC'} or (bpy.data.scenes["Scene"].frame_current == bpy.data.scenes["Scene"].frame_end):
             self.cancel(context)
             return {'CANCELLED'}
@@ -58,7 +101,6 @@ class ModalTimerOperator(bpy.types.Operator):
         wm = context.window_manager
         # start animating
         bpy.ops.screen.animation_play()
-       # analyse_scene()
         self._timer = wm.event_timer_add(1, window=context.window)
         self.count = 0
         wm.modal_handler_add(self)
@@ -83,7 +125,7 @@ def unregister():
 
 
 
-setSceneProperties()
+set_scene_properties()
 
 if __name__ == "__main__":
     register()
