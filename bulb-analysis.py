@@ -1,9 +1,10 @@
 import bpy
+from bpy.app.handlers import persistent
 
 print("Starting...")
 
-scene_objects_list = []
 frame_read_counter = []
+scene_objects_dict = {}
 
 class SceneObject:
   
@@ -13,11 +14,11 @@ class SceneObject:
       self._location = []
       print("initalisation complete")
     
-  @property
-  def location(self):
+ # @property
+  def get_location(self,i):
       """I'm the location of the scene object."""
-      print(f"getter of location called for {self.name}")
-      return self._location
+      print(f"getter of location called for {self.name} for frame {i}")
+      return self._location[i]
 
  # @loc.setter
   def set_location(self, loc):
@@ -44,30 +45,39 @@ def set_scene_properties():
       if obj.type == 'MESH': 
         so = SceneObject(obj.name)
         print("added object : "+so.name)
-        so.set_location(i)
-        so.set_location(i*5)
-        i+=1
-        scene_objects_list.append(so)         
-        print("added loc :"+ str((so.location)[1]))
-      #  print("test get by name : "+ str(so.getByName(obj.name).loc[0]))
+        scene_objects_dict[obj.name] = so
         print(f"Setting params completed for {obj.name}\n")
         
-    for object in scene_objects_list:
-        if(object.name == 'Ladder'):
-            print("Testing accessing object locations"+ str(object.location[0]))     
-        
-    print("Total objects in current scene : " + str(len(scene_objects_list)))
+    print("Total objects in current scene : " + str(len(scene_objects_dict)))
                   
-                
-def process_obj_location(self):
-    current_frame = bpy.data.scenes["Scene"].frame_current
-    print(f"Processing object location for frame {current_frame}")    
-    if (current_frame in frame_read_counter):
+########### Process location/rotation of objects during animation 
+               
+def process_obj_location(scene):
+    print("HAHAHAHAHAAHAHAHA")
+    if scene.frame_current in frame_read_counter:
         return
-    frame_read_counter.append(bpy.data.scenes["Scene"].frame_current)
-    print(f"Finished processing locations for frame : {current_frame}")
+    print(f"Processing object location for frame : {str(scene.frame_current)}")   
+    for obj in bpy.context.scene.objects:
+      if obj.type == 'MESH': 
+          location = obj.rotation_euler
+          object_instance = scene_objects_dict.get(obj.name, None)
+          object_instance.set_location(location)
     
+    frame_read_counter.append(scene.frame_current)
+    print(f"Finished processing locations for frame {str(scene.frame_current)}")
+
+
+ 
+########## Analyse object movement post animation   
+def analyse_scene():
+    print("Animation over, will analyse scene now")
+    ladder_object = scene_objects_dict.get("Ladder")
+    print("Testing accessing Ladder locations 0 : "+ str(ladder_object.get_location(0)) + " 50 : "+str(ladder_object.get_location(50)))  
+    p_object = scene_objects_dict.get("Pinnochio")
+    print("Testing accessing Pinnochio locations 0 : "+ str(p_object.get_location(0)) + " 50 : "+str(p_object.get_location(50)))  
+
     
+        
 #################### code to play animation #######################################################################
 class ModalTimerOperator(bpy.types.Operator):
     """Operator which runs its self from a timer"""
@@ -78,14 +88,14 @@ class ModalTimerOperator(bpy.types.Operator):
     count = 0
     
     def modal(self, context, event):
-        process_obj_location(self)
+   
         if event.type in {'ESC'} or (bpy.data.scenes["Scene"].frame_current == bpy.data.scenes["Scene"].frame_end):
             self.cancel(context)
+            analyse_scene()
             return {'CANCELLED'}
 
         if event.type == 'TIMER':
             self.count += 1
-
 
         return {'PASS_THROUGH'}
 
@@ -125,4 +135,5 @@ if __name__ == "__main__":
 
     # test call
     bpy.ops.wm.modal_timer_operator()
+    bpy.app.handlers.frame_change_post.append(process_obj_location)
     
