@@ -5,6 +5,7 @@ print("Starting...")
 
 frame_read_counter = []
 scene_objects_dict = {}
+energy_unit = 1
 
 class SceneObject:
   
@@ -13,21 +14,16 @@ class SceneObject:
       self.name = name 
       self._location = []
       self._moving = False
+      self._volume = 0
       print("initalisation complete")
     
  # @property
   def get_location(self,i):
       """I'm the location of the scene object."""
-     # print(f"getter of location called for {self.name} for frame {i}")
       return self._location[i]
 
  # @loc.setter
   def set_location(self, loc):
-   #   print(f"setter of location called for {self.name}")
-   #   print("Length of frame_and_loc: "+ str(len(frame_and_loc)))
-    #  print("frame no.: "+ str(frame_and_loc[0]))
-    #  print("location of object : "+ str(frame_and_loc[1]))
-    #  self._loc.insert(frame_and_loc[0], frame_and_loc[1])
       self._location.append(loc) 
       
       
@@ -37,8 +33,46 @@ class SceneObject:
 
   def set_moving(self, isMoving):
        self._moving = isMoving
+       
+
+  def set_volume(self, vol):
+     self._volume = vol     
     
 
+
+############ Calculate volume of objects
+# Quick way to test with/without hidden faces
+USE_FILTER_FACES = True
+
+def is_face_skip(f):
+    """Ignore faces that pass this test!"""
+    return f.hide is False
+    # If want to filter based on material.
+    # return f.material_index == 0
+    
+    
+def bmesh_from_object_final(ob):
+    import bmesh
+    matrix = ob.matrix_world
+    me = ob.to_mesh()
+    me.transform(matrix)
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    if USE_FILTER_FACES:
+        faces_remove = [f for f in bm.faces if not is_face_skip(f)]
+        for f in faces_remove:
+            bm.faces.remove(f)
+    return (bm, matrix.is_negative)
+
+
+def volume_from_object(ob):
+    bm, is_negative = bmesh_from_object_final(ob)
+    volume = bm.calc_volume(signed=True)
+    #area = sum(f.calc_area() for f in bm.faces)
+    bm.free()
+    if is_negative:
+        volume = -volume
+    return volume#, area
 
 ############ Set global scene properties 
 def set_scene_properties():
@@ -48,8 +82,10 @@ def set_scene_properties():
     for obj in bpy.context.scene.objects:
       if obj.type == 'MESH':
         so = SceneObject(obj.name)
+        vol = volume_from_object(obj)
+        so.set_volume(vol) 
         scene_objects_dict[obj.name] = so
-        print(f"Setting params completed for {obj.name}\n")
+              
         
     print("Total objects in current scene : " + str(len(scene_objects_dict)))
 
@@ -92,15 +128,24 @@ def analyse_scene():
                 move_change_counter[name]+= 1
                 
     #Loop of objects to check if position changes for more than 90% of the total no. of frames
-    #if yes set moving = True
-    for name, move_counter in move_change_counter.items():
-        if move_counter >= 0.9*frame_range:
-            scene_object = scene_objects_dict.get(name, None)
-            scene_object.set_moving(True)
-            print(f"{name} is rotating atleast 90% of the time")
-        else:
-            print(f"{name} is not rotating atleast 90% of the time") 
-            
+    energy_generated = 0
+    energy_saved = 0
+    for name, move_duration in move_change_counter.items():
+       
+       scene_object = scene_objects_dict.get(name, None)
+       if move_duration == 0:
+          #for static objects, calculate max energy saved i.e. if the object moved for the maximum time the other objects moved 
+          energy_saved += scene_object._volume * energy_unit * max(move_change_counter.values())
+       else:
+          energy_generated += scene_object._volume * energy_unit * move_duration
+          
+    print(f"Energy generated for the scene : {energy_generated}")
+    print(f"Energy saved from the scene : {energy_saved}")
+    
+    if energy_generated > energy_saved:
+       print("It is a joke")
+    else:
+       print("It is not a joke")   
     print("Finished analysing scene")
     
         
