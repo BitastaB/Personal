@@ -5,26 +5,23 @@ print("Testing gym")
 env = gym.make('Taxi-v3')
 #env = gym.make('FrozenLake-v0')
 
-
-
 def train():
     print("training")
-    q = np.full((env.observation_space.n, env.action_space.n), -0.001)
+    q = np.full((env.observation_space.n, env.action_space.n), -0.0001)
     gamma = 0.8
     delta = 0.8
-    for t in range(1, 300):
+    for t in range(1, 3000):
         steps = 0
         done = False
         current_state = env.reset()  # initial state
         print("starting new episode")
-        print("current q : \n",q,"\n\n")
         while not done:
             episode_reward = 0
            # print("current state : ", current_state)
            # print("q current state : ",q[current_state])
             #  print("iteration {}", t)
             action = np.argmax(q[current_state])
-            env.render()
+           # env.render()
            # print("action : ", action)
             next_state, reward, done, info = env.step(action)
            # print(f"reward : {reward}")
@@ -41,5 +38,25 @@ def train():
                 print("total reward for this episode", episode_reward)
 
         print(f"episode converged in {steps} steps")
-train()
+    return q
 
+
+Q = train()
+
+def test():
+    print("testing")
+    current_state = env.reset()
+    done = False
+    rewards = 0
+    steps = 0
+    while not done:
+        env.render()
+        action = np.argmax(Q[current_state])
+        next_state, reward, done, info = env.step(action)
+        current_state = next_state
+        steps += 1
+        rewards += reward
+    print(f"converged with {steps} steps and {rewards} reward")
+
+
+test()
